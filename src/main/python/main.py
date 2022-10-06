@@ -1,5 +1,8 @@
+import time
+
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
-from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QPushButton, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QPushButton, QSizePolicy, QGraphicsView,\
+    QGraphicsScene, QGraphicsPixmapItem
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QImage, QPixmap
 import cv2
@@ -34,14 +37,20 @@ class MyWidget(QWidget):
 
     def __init__(self):
         super(MyWidget, self).__init__(None)  # 设置为顶级窗口，无边框
+        self.view_item = None
         self.btn_exit = None
         self.btn_full = None
         self.start = None
         self.label = None
         self.pix = None
+        self.video_view = None
+        self.scene = None
 
     def init(self):
         self.label = QLabel("当前时间")
+        self.scene = QGraphicsScene()
+        self.video_view = QGraphicsView()
+        self.video_view.setScene(self.scene)
         self.setWindowTitle("视频测试")
         self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout = QGridLayout()
@@ -53,7 +62,7 @@ class MyWidget(QWidget):
         self.start.clicked.connect(self.start_click)
         self.btn_full.clicked.connect(self.btnfull_click)
         self.btn_exit.clicked.connect(self.btnexit_click)
-        layout.addWidget(self.label, 0, 0, 1, 3)
+        layout.addWidget(self.video_view, 0, 0, 1, 3)
         layout.addWidget(self.start, 1, 0)
         layout.addWidget(self.btn_full, 1, 1)
         layout.addWidget(self.btn_exit, 1, 2)
@@ -73,20 +82,33 @@ class MyWidget(QWidget):
                 frame2 = cv2.cvtColor(equ2, cv2.COLOR_BGR2RGB)
                 q_img = QImage(frame2.data, frame2.shape[1], frame2.shape[0], frame2.shape[1] * 3, QImage.Format_RGB888)
 
-                if self.is_resize:
-                    self.label.resize(400, 400)
-                    self.resize(640, 480)
-                    self.is_resize = False
-                    self.pix = QPixmap(q_img).scaled(400, 400)
-                    self.showNormal()
-                else:
-                    self.pix = QPixmap(q_img).scaled(self.label.width(), self.label.height())
+
+                # if self.is_resize:
+                #     self.label.resize(400, 400)
+                #     self.resize(640, 480)
+                #     self.is_resize = False
+                #     self.pix = QPixmap(q_img).scaled(400, 400)
+                #
+                # else:
+                self.pix = QPixmap(q_img).scaled(self.video_view.width()-2, self.video_view.height()-2)
+                # 获取当前view的Rect
+                view_rect = self.video_view.contentsRect()
+                # 计算scene的Rect，因为我将图片图元居中显示，所以我将偏移计算在左右、上下居中位置
+                # s_x = int(abs(view_rect.width() - self.image_w) / 2)
+                # s_y = int(abs(view_rect.height() - self.image_h) / 2)
+                self.video_view.setSceneRect(-1, -1, view_rect.width(), view_rect.height())
+
             else:
                 self.label.setText(f"cap is error!{self.app.count}")
+            time.sleep(0.002)
 
     def paintEvent(self, event):
         if self.pix is not None:
-            self.label.setPixmap(self.pix)
+            if self.view_item is not None:
+                self.scene.removeItem(self.view_item)
+            self.view_item = self.scene.addPixmap(self.pix)
+            self.video_view.update()
+
 
     def start_click(self):
         print(self.app.open())
@@ -97,7 +119,7 @@ class MyWidget(QWidget):
         self.showFullScreen()
 
     def btnexit_click(self):
-        self.is_resize = True
+        self.showNormal()
 
     def time_out(self):
         self.app.count += 1
