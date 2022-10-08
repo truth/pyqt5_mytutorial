@@ -21,7 +21,7 @@ class MyApp:
 
     def open(self):
         self.is_run = True
-        self.cap = cv2.VideoCapture("rtsp://admin:nutshell123456@192.168.22.178/h264/chn1/main/av_stream")
+        self.cap = cv2.VideoCapture("rtsp://admin:nutshell123456@192.168.22.178/h264/chn1/sub/av_stream")
         # print(self.cap.isOpened())
         return self.cap.isOpened()
 
@@ -38,6 +38,8 @@ class MyWidget(QWidget):
 
     def __init__(self):
         super(MyWidget, self).__init__(None)  # 设置为顶级窗口，无边框
+        self.chart_view_blue = None
+        self.chart_view_green = None
         self.chart_view = None
         self.view_item = None
         self.btn_exit = None
@@ -47,7 +49,7 @@ class MyWidget(QWidget):
         self.pix = None
         self.video_view = None
         self.scene = None
-        self.rhist = None
+        self.frame = None
 
     def init(self):
         self.label = QLabel("当前时间")
@@ -68,17 +70,23 @@ class MyWidget(QWidget):
         layout.addWidget(self.video_view, 0, 0, 1, 2)
         self.chart_view = MyChartView()
         self.chart_view.init()
+        self.chart_view_green = MyChartView()
+        self.chart_view_green.init()
+        self.chart_view_blue = MyChartView()
+        self.chart_view_blue.init()
         layout.addWidget(self.chart_view.graphicsView, 0, 2, 1, 2)
-        layout.addWidget(self.start, 1, 0)
-        layout.addWidget(self.btn_full, 1, 1)
-        layout.addWidget(self.btn_exit, 1, 2)
+        layout.addWidget(self.chart_view_green.graphicsView, 1, 0, 1, 2)
+        layout.addWidget(self.chart_view_blue.graphicsView, 1, 2, 1, 2)
+        layout.addWidget(self.start, 2, 0)
+        layout.addWidget(self.btn_full, 2, 1)
+        layout.addWidget(self.btn_exit, 2, 2)
         self.setLayout(layout)
         # self.chart_view.add_data()
 
     def run_thread(self):
         while self.app.is_run:
             if self.app.cap.isOpened():
-                success, frame = self.app.cap.read()
+                success, self.frame = self.app.cap.read()
                 # (b, g, r) = cv2.split(frame)
                 # bH = cv2.equalizeHist(b)
                 # gH = cv2.equalizeHist(g)
@@ -86,11 +94,9 @@ class MyWidget(QWidget):
                 # # 合并每一个通道
                 # equ2 = cv2.merge((bH, gH, rH))
                 # result2 = np.hstack((frame, equ2))
-                frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frame2 = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 q_img = QImage(frame2.data, frame2.shape[1], frame2.shape[0], frame2.shape[1] * 3, QImage.Format_RGB888)
-
-                self.rhist = cv2.calcHist([frame], [2], None, [256], [0, 256])
-                self.chart_view.update(self.rhist)
+                # self.rhist = cv2.calcHist([frame], [2], None, [256], [0, 256])
                 # if self.is_resize:
                 #     self.label.resize(400, 400)
                 #     self.resize(640, 480)
@@ -105,7 +111,7 @@ class MyWidget(QWidget):
                 # s_x = int(abs(view_rect.width() - self.image_w) / 2)
                 # s_y = int(abs(view_rect.height() - self.image_h) / 2)
                 self.video_view.setSceneRect(-1, -1, view_rect.width(), view_rect.height())
-
+                self.update()
             else:
                 self.label.setText(f"cap is error!{self.app.count}")
             time.sleep(0.002)
@@ -116,7 +122,10 @@ class MyWidget(QWidget):
                 self.scene.removeItem(self.view_item)
             self.view_item = self.scene.addPixmap(self.pix)
             self.video_view.update()
-
+            self.chart_view_blue.update(self.frame, 0)
+            self.chart_view_green.update(self.frame, 1)
+            self.chart_view.update(self.frame, 2)
+        pass
 
     def start_click(self):
         print(self.app.open())

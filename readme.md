@@ -104,3 +104,5 @@ void QGridLayout::addWidget(QWidget *widget, int fromRow, int fromColumn, int ro
 ## 4.1 绘制图
 
 *pyecharts* https://blog.csdn.net/m0_49501453/article/details/118071783
+
+https://gist.github.com/DataSolveProblems/059ba59170441c53e79ef5d2f1653a9d

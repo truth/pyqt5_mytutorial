@@ -2,9 +2,13 @@ from PyQt5.QtChart import QChartView, QLineSeries, QValueAxis, QAreaSeries, QCha
 from PyQt5.QtGui import QPen, QLinearGradient, QColor
 from PyQt5.QtCore import QPointF
 from PyQt5.Qt import QGradient, Qt, QPainter
+import cv2
+
 
 class MyChartView(object):
-    is_refresh = True
+    count = 0
+    colors = [QColor(0,0,255), QColor(0,255,0), QColor(255,0,0)]
+    Pencolors = [Qt.blue, Qt.green, Qt.red]
     def __init__(self):
         self.area2 = None
         self.area1 = None
@@ -52,38 +56,41 @@ class MyChartView(object):
         self.area1 = area
         self.chart.addSeries(self.area1)
 
-    def update(self,hist):
-        if not self.is_refresh:
+    def update(self, frame, chn):
+        self.count +=1
+        if self.count<50:
             return
         self.series.clear()
+        hist = cv2.calcHist([frame], [chn], None, [256], [0, 256])
         for i in range(len(self.x)):
             self.series.append(self.x[i],hist[i])
         area = QAreaSeries(self.series, self.lowerSeries)
-        area.setName("区域曲线")
-        pen = QPen(Qt.red)
+        # area.setName("区域曲线")
+        pen = QPen(self.Pencolors[chn])
         pen.setWidth(1)
         area.setPen(pen)
 
         gradient = QLinearGradient(QPointF(0, 0), QPointF(0, 1))
         gradient.setColorAt(0.0, QColor(255, 255, 255))
-        gradient.setColorAt(1.0, QColor(0, 255, 0))
+        gradient.setColorAt(1.0, self.colors[chn])
         gradient.setCoordinateMode(QGradient.ObjectBoundingMode)
         area.setBrush(gradient)
         if self.area1 is not None:
             self.chart.removeSeries(self.area1)
         self.area1 = area
         self.chart.addSeries(self.area1)
-        self.is_refresh = False
+        self.count = 0
 
     def init(self):
         self.chart = QChart()
-        self.chart.setTitle('测试样例')
-        self.series = QLineSeries()
-        self.series.setName("压力")  # 设置曲线名称
+        self.chart.setTitle('直方图')
+        self.chart.legend().hide()
+        self.series = QLineSeries(self.chart)
+        # self.series.setName("压力")  # 设置曲线名称
         # self.chart.addSeries(self.series)  # 把曲线添加到QChart的实例中
 
-        self.series_temp = QLineSeries()
-        self.series_temp.setName("温度")  # 设置曲线名称
+        self.series_temp = QLineSeries(self.chart)
+        # self.series_temp.setName("温度")  # 设置曲线名称
         # self.chart.addSeries(self.series_temp)  # 把曲线添加到QChart的实例中
 
         # 声明并初始化X轴、Y轴
@@ -95,16 +102,16 @@ class MyChartView(object):
         self.vlaxisY.setMin(0)
         self.vlaxisY.setMax(250)
         # 设置坐标轴名称
-        self.dtaxisX.setTitleText("X轴")
-        self.vlaxisY.setTitleText("Y轴")
+        # self.dtaxisX.setTitleText("X轴")
+        # self.vlaxisY.setTitleText("Y轴")
         # 把坐标轴添加到chart中
         self.chart.addAxis(self.dtaxisX, Qt.AlignBottom)
         self.chart.addAxis(self.vlaxisY, Qt.AlignLeft)
         # 把曲线关联到坐标轴
-        self.series.attachAxis(self.dtaxisX)
-        self.series.attachAxis(self.vlaxisY)
-        self.series_temp.attachAxis(self.dtaxisX)
-        self.series_temp.attachAxis(self.vlaxisY)
+        # self.series.attachAxis(self.dtaxisX)
+        # self.series.attachAxis(self.vlaxisY)
+        # self.series_temp.attachAxis(self.dtaxisX)
+        # self.series_temp.attachAxis(self.vlaxisY)
 
         # self.series.append(0, 100)
         # self.series.append(30, 200)
