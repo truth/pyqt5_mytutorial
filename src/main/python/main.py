@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 import threading
 import sys
-
+from MyChartView import MyChartView
 
 class MyApp:
     cap = None
@@ -26,7 +26,8 @@ class MyApp:
         return self.cap.isOpened()
 
     def close(self):
-        self.cap.release()
+        if self.cap is not None:
+            self.cap.release()
         self.is_run = False
 
 
@@ -37,6 +38,7 @@ class MyWidget(QWidget):
 
     def __init__(self):
         super(MyWidget, self).__init__(None)  # 设置为顶级窗口，无边框
+        self.chart_view = None
         self.view_item = None
         self.btn_exit = None
         self.btn_full = None
@@ -45,6 +47,7 @@ class MyWidget(QWidget):
         self.pix = None
         self.video_view = None
         self.scene = None
+        self.rhist = None
 
     def init(self):
         self.label = QLabel("当前时间")
@@ -62,27 +65,32 @@ class MyWidget(QWidget):
         self.start.clicked.connect(self.start_click)
         self.btn_full.clicked.connect(self.btnfull_click)
         self.btn_exit.clicked.connect(self.btnexit_click)
-        layout.addWidget(self.video_view, 0, 0, 1, 3)
+        layout.addWidget(self.video_view, 0, 0, 1, 2)
+        self.chart_view = MyChartView()
+        self.chart_view.init()
+        layout.addWidget(self.chart_view.graphicsView, 0, 2, 1, 2)
         layout.addWidget(self.start, 1, 0)
         layout.addWidget(self.btn_full, 1, 1)
         layout.addWidget(self.btn_exit, 1, 2)
         self.setLayout(layout)
+        # self.chart_view.add_data()
 
     def run_thread(self):
         while self.app.is_run:
             if self.app.cap.isOpened():
                 success, frame = self.app.cap.read()
-                (b, g, r) = cv2.split(frame)
-                bH = cv2.equalizeHist(b)
-                gH = cv2.equalizeHist(g)
-                rH = cv2.equalizeHist(r)
-                # 合并每一个通道
-                equ2 = cv2.merge((bH, gH, rH))
+                # (b, g, r) = cv2.split(frame)
+                # bH = cv2.equalizeHist(b)
+                # gH = cv2.equalizeHist(g)
+                # rH = cv2.equalizeHist(r)
+                # # 合并每一个通道
+                # equ2 = cv2.merge((bH, gH, rH))
                 # result2 = np.hstack((frame, equ2))
-                frame2 = cv2.cvtColor(equ2, cv2.COLOR_BGR2RGB)
+                frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 q_img = QImage(frame2.data, frame2.shape[1], frame2.shape[0], frame2.shape[1] * 3, QImage.Format_RGB888)
 
-
+                self.rhist = cv2.calcHist([frame], [2], None, [256], [0, 256])
+                self.chart_view.update(self.rhist)
                 # if self.is_resize:
                 #     self.label.resize(400, 400)
                 #     self.resize(640, 480)

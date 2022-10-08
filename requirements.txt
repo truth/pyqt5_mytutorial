@@ -17,6 +17,9 @@ pipreqs==0.4.11
 PyInstaller==3.4
 pypiwin32==223
 PyQt5==5.9.2
+PyQt5-Qt5==5.15.2
+PyQt5-sip==12.9.1
+PyQtChart==5.9.2
 pywin32==304
 pywin32-ctypes==0.2.0
 requests==2.27.1

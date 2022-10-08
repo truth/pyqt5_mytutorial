@@ -86,3 +86,21 @@ work, see https://build-system.fman.io/troubleshooting.
 $ copy venv\Lib\site-packages\cv2\opencv_ffmpeg410_64.dll .\target\MyFbsApp
 ```
 
+# 3. pip 使用国内镜像源
+
+https://www.runoob.com/w3cnote/pip-cn-mirror.html
+
+```bash
+pip3 install numpy -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+```
+
+# 4. PyQt5 使用问题
+
+``` python 
+void QGridLayout::addWidget(QWidget *widget, int fromRow, int fromColumn, int rowSpan, int columnSpan, Qt::Alignment alignment = Qt::Alignment())
+```
+
+## 4.1 绘制图
+
+*pyecharts* https://blog.csdn.net/m0_49501453/article/details/118071783
