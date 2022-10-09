@@ -3,14 +3,16 @@ import time
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QPushButton, QSizePolicy, QGraphicsView,\
     QGraphicsScene, QGraphicsPixmapItem
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QFile
 from PyQt5.QtGui import QImage, QPixmap
+
 import cv2
 import numpy as np
 import threading
 import sys
 from MyChartView import MyChartView
-
+from QSSLoader import QSSLoader
+from qt_material import apply_stylesheet
 class MyApp:
     cap = None
     count = 0
@@ -21,7 +23,7 @@ class MyApp:
 
     def open(self):
         self.is_run = True
-        self.cap = cv2.VideoCapture("rtsp://admin:nutshell123456@192.168.22.178/h264/chn1/sub/av_stream")
+        self.cap = cv2.VideoCapture("rtsp://admin:nutshell123456@192.168.20.198/h264/chn1/sub/av_stream")
         # print(self.cap.isOpened())
         return self.cap.isOpened()
 
@@ -30,6 +32,10 @@ class MyApp:
             self.cap.release()
         self.is_run = False
 
+    def restart(self):
+        self.close()
+        time.sleep(2)
+        self.open()
 
 class MyWidget(QWidget):
     app = MyApp()
@@ -38,6 +44,7 @@ class MyWidget(QWidget):
 
     def __init__(self):
         super(MyWidget, self).__init__(None)  # 设置为顶级窗口，无边框
+        self.ready = False
         self.chart_view_blue = None
         self.chart_view_green = None
         self.chart_view = None
@@ -52,12 +59,12 @@ class MyWidget(QWidget):
         self.frame = None
 
     def init(self):
-        self.label = QLabel("当前时间")
+        self.label = QLabel("消息区")
         self.scene = QGraphicsScene()
         self.video_view = QGraphicsView()
         self.video_view.setScene(self.scene)
         self.setWindowTitle("视频测试")
-        self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout = QGridLayout()
         self.timer.timeout.connect(self.time_out)
         # timer.start(20)
@@ -80,13 +87,18 @@ class MyWidget(QWidget):
         layout.addWidget(self.start, 2, 0)
         layout.addWidget(self.btn_full, 2, 1)
         layout.addWidget(self.btn_exit, 2, 2)
+        layout.addWidget(self.label, 2, 3)
         self.setLayout(layout)
         # self.chart_view.add_data()
 
     def run_thread(self):
+        t = time.perf_counter()
         while self.app.is_run:
             if self.app.cap.isOpened():
                 success, self.frame = self.app.cap.read()
+                ftime = time.perf_counter() - t
+                print(f'per frame time:{ftime:.4f}s')
+                t = time.perf_counter()
                 # (b, g, r) = cv2.split(frame)
                 # bH = cv2.equalizeHist(b)
                 # gH = cv2.equalizeHist(g)
@@ -94,6 +106,11 @@ class MyWidget(QWidget):
                 # # 合并每一个通道
                 # equ2 = cv2.merge((bH, gH, rH))
                 # result2 = np.hstack((frame, equ2))
+                if not success:
+                    self.label.setText(f"restart:{self.app.count}")
+                    self.app.restart()
+                    self.label.setText(f"start ok!")
+                    return
                 frame2 = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 q_img = QImage(frame2.data, frame2.shape[1], frame2.shape[0], frame2.shape[1] * 3, QImage.Format_RGB888)
                 # self.rhist = cv2.calcHist([frame], [2], None, [256], [0, 256])
@@ -112,11 +129,15 @@ class MyWidget(QWidget):
                 # s_y = int(abs(view_rect.height() - self.image_h) / 2)
                 self.video_view.setSceneRect(-1, -1, view_rect.width(), view_rect.height())
                 self.update()
+                self.ready = True
+                self.label.setText(f"time:{ftime:.4f}s")
             else:
                 self.label.setText(f"cap is error!{self.app.count}")
-            time.sleep(0.002)
+            time.sleep(0.01)
 
     def paintEvent(self, event):
+        if not self.ready:
+            return
         if self.pix is not None:
             if self.view_item is not None:
                 self.scene.removeItem(self.view_item)
@@ -125,7 +146,8 @@ class MyWidget(QWidget):
             self.chart_view_blue.update(self.frame, 0)
             self.chart_view_green.update(self.frame, 1)
             self.chart_view.update(self.frame, 2)
-        pass
+            self.ready = False
+        return
 
     def start_click(self):
         print(self.app.open())
@@ -163,8 +185,17 @@ class MyWidget(QWidget):
 if __name__ == '__main__':
     appctxt = ApplicationContext()       # 1. Instantiate ApplicationContext
 
+    # create the application and the main window
+    from qt_material import list_themes
+
+    list_themes()
+    # setup stylesheet
+    apply_stylesheet(appctxt.app, theme='default_dark.xml')
+    # style_file = 'E:/Python/PycharmProjects/pyqt5/src/main/python/Behave-dark.qss'
+    # style_sheet = QSSLoader.read_qss_file(style_file)
     window = MyWidget()
     window.init()
+    #  window.setStyleSheet(style_sheet)
     window.resize(600, 400)
     window.show()
     exit_code = appctxt.app.exec_()      # 2. Invoke appctxt.app.exec_()

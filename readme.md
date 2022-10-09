@@ -106,3 +106,62 @@ void QGridLayout::addWidget(QWidget *widget, int fromRow, int fromColumn, int ro
 *pyecharts* https://blog.csdn.net/m0_49501453/article/details/118071783
 
 https://gist.github.com/DataSolveProblems/059ba59170441c53e79ef5d2f1653a9d
+
+## 4.2 QSS
+
+[使用QSS美化PyQt界面，分享6套超赞皮肤](https://zhuanlan.zhihu.com/p/390192953)
+
+创建一个加载QSS样式表的公共类：
+
+```python
+class QSSLoader:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def read_qss_file(qss_file_name):
+        with open(qss_file_name, 'r',  encoding='UTF-8') as file:
+            return file.read()
+```
+
+在代码中加载qss样式表：
+
+```python
+app = QApplication(sys.argv)
+window = MainWindow()
+
+style_file = './style.qss'
+style_sheet = QSSLoader.read_qss_file(style_file)
+window.setStyleSheet(style_sheet)
+
+window.show()
+sys.exit(app.exec_())
+```
+
+使用这套样式表也非常简单，作者已经打包发布到了pypi，所以我们只需要
+
+```bash
+pip install qt-material
+```
+
+安装，并在代码中import即可
+
+```python
+# 使用例子
+import sys
+# from PySide6 import QtWidgets
+# from PySide2 import QtWidgets
+from PyQt5 import QtWidgets
+from qt_material import apply_stylesheet
+
+# create the application and the main window
+app = QtWidgets.QApplication(sys.argv)
+window = QtWidgets.QMainWindow()
+
+# setup stylesheet
+apply_stylesheet(app, theme='dark_teal.xml')
+
+# run
+window.show()
+app.exec_()
+```

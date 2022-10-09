@@ -8,7 +8,9 @@ fbs-tutorial-shim==1.0.2
 fbs-tutorial-shim-windows==1.0.0
 future==0.18.2
 idna==3.4
+Jinja2==3.0.3
 macholib==1.16.2
+MarkupSafe==2.0.1
 numpy==1.19.5
 opencv-python==4.1.0.25
 opencv-python-headless==4.1.0.25
@@ -22,6 +24,8 @@ PyQt5-sip==12.9.1
 PyQtChart==5.9.2
 pywin32==304
 pywin32-ctypes==0.2.0
+qstring==0.2.1
+qt-material==2.5
 requests==2.27.1
 sip==4.19.8
 urllib3==1.26.12

@@ -58,7 +58,7 @@ class MyChartView(object):
 
     def update(self, frame, chn):
         self.count +=1
-        if self.count<50:
+        if self.count<5:
             return
         self.series.clear()
         hist = cv2.calcHist([frame], [chn], None, [256], [0, 256])
@@ -100,7 +100,7 @@ class MyChartView(object):
         self.dtaxisX.setMin(0)
         self.dtaxisX.setMax(256)
         self.vlaxisY.setMin(0)
-        self.vlaxisY.setMax(250)
+        self.vlaxisY.setMax(100)
         # 设置坐标轴名称
         # self.dtaxisX.setTitleText("X轴")
         # self.vlaxisY.setTitleText("Y轴")
