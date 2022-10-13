@@ -1,5 +1,5 @@
 import time
-
+import os
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QPushButton, QSizePolicy, QGraphicsView,\
     QGraphicsScene, QGraphicsPixmapItem
@@ -13,6 +13,9 @@ import sys
 from MyChartView import MyChartView
 from QSSLoader import QSSLoader
 from qt_material import apply_stylesheet
+# from PoseDetect import Detector
+
+
 class MyApp:
     cap = None
     count = 0
@@ -23,7 +26,8 @@ class MyApp:
 
     def open(self):
         self.is_run = True
-        self.cap = cv2.VideoCapture("rtsp://admin:nutshell123456@192.168.20.198/h264/chn1/sub/av_stream")
+        # self.cap = cv2.VideoCapture("rtsp://admin:nutshell123456@192.168.20.198/h264/chn1/sub/av_stream")
+        self.cap = cv2.VideoCapture("rtsp://192.168.20.11:58554/live/car2")
         # print(self.cap.isOpened())
         return self.cap.isOpened()
 
@@ -41,6 +45,7 @@ class MyWidget(QWidget):
     app = MyApp()
     timer = QTimer()
     is_resize = False
+    # detector = Detector()
 
     def __init__(self):
         super(MyWidget, self).__init__(None)  # 设置为顶级窗口，无边框
@@ -106,12 +111,14 @@ class MyWidget(QWidget):
                 # # 合并每一个通道
                 # equ2 = cv2.merge((bH, gH, rH))
                 # result2 = np.hstack((frame, equ2))
-                if not success:
-                    self.label.setText(f"restart:{self.app.count}")
-                    self.app.restart()
-                    self.label.setText(f"start ok!")
-                    return
-                frame2 = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+
+                # self.frame = self.detector.do_model(self.frame)
+                # if not success:
+                #     self.label.setText(f"restart:{self.app.count}")
+                #     self.app.restart()
+                #     self.label.setText(f"start ok!")
+                #     return
+                frame2 = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB) # .ims[0]
                 q_img = QImage(frame2.data, frame2.shape[1], frame2.shape[0], frame2.shape[1] * 3, QImage.Format_RGB888)
                 # self.rhist = cv2.calcHist([frame], [2], None, [256], [0, 256])
                 # if self.is_resize:
@@ -184,7 +191,11 @@ class MyWidget(QWidget):
 
 if __name__ == '__main__':
     appctxt = ApplicationContext()       # 1. Instantiate ApplicationContext
-
+    os.environ.putenv("YOLOV5_CONFIG_DIR", "./")
+    print(os.getenv("YOLOV5_CONFIG_DIR"))
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    print(current_directory)
+    print(cv2.cuda.getCudaEnabledDeviceCount())
     # create the application and the main window
     from qt_material import list_themes
 
