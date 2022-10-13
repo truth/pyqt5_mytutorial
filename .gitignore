@@ -4,3 +4,5 @@
 /target
 /dist
 **/__pycache__
+yolov5s.pt
+**/yolov5s.pt

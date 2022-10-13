@@ -1,5 +1,5 @@
 import cv2
-# import yolov5
+import yolov5
 
 import numpy as np
 haar_front_face_xml = 'data/haarcascade_frontalface_default.xml'
@@ -26,9 +26,9 @@ class Detector(object):
             for (ex, ey, ew, eh) in eyes:
                 cv2.rectangle(frame, (ex + x, ey + y), (x + ex + ew, y + ey + eh), (0, 255, 0), 2)
 
-    # def __init__(self):
-    #     self.model = yolov5.load('yolov5s.pt')
-    #
-    # def do_model(self, frame):
-    #     results = self.model(frame)
-    #     return results
+    def __init__(self):
+        self.model = yolov5.load('yolov5s.pt')
+
+    def do_model(self, frame):
+        results = self.model(frame)
+        return results

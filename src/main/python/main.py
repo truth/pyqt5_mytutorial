@@ -13,7 +13,7 @@ import sys
 from MyChartView import MyChartView
 from QSSLoader import QSSLoader
 from qt_material import apply_stylesheet
-# from PoseDetect import Detector
+from PoseDetect import Detector
 
 
 class MyApp:
@@ -45,7 +45,7 @@ class MyWidget(QWidget):
     app = MyApp()
     timer = QTimer()
     is_resize = False
-    # detector = Detector()
+    detector = Detector()
 
     def __init__(self):
         super(MyWidget, self).__init__(None)  # 设置为顶级窗口，无边框
@@ -112,13 +112,14 @@ class MyWidget(QWidget):
                 # equ2 = cv2.merge((bH, gH, rH))
                 # result2 = np.hstack((frame, equ2))
 
-                # self.frame = self.detector.do_model(self.frame)
-                # if not success:
-                #     self.label.setText(f"restart:{self.app.count}")
-                #     self.app.restart()
-                #     self.label.setText(f"start ok!")
-                #     return
-                frame2 = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB) # .ims[0]
+                model = self.detector.do_model(self.frame)
+                if not success:
+                    self.label.setText(f"restart:{self.app.count}")
+                    self.app.restart()
+                    self.label.setText(f"start ok!")
+                    return
+                model.render()
+                frame2 = cv2.cvtColor(model.ims[0], cv2.COLOR_BGR2RGB) #
                 q_img = QImage(frame2.data, frame2.shape[1], frame2.shape[0], frame2.shape[1] * 3, QImage.Format_RGB888)
                 # self.rhist = cv2.calcHist([frame], [2], None, [256], [0, 256])
                 # if self.is_resize:
