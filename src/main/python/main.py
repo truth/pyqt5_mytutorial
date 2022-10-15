@@ -1,7 +1,6 @@
 import time
 import os
-from fbs_runtime.application_context.PyQt5 import ApplicationContext
-from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QPushButton, QSizePolicy, QGraphicsView,\
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QGridLayout, QLabel, QPushButton, QSizePolicy, QGraphicsView,\
     QGraphicsScene, QGraphicsPixmapItem
 from PyQt5.QtCore import Qt, QTimer, QFile
 from PyQt5.QtGui import QImage, QPixmap
@@ -14,6 +13,7 @@ from MyChartView import MyChartView
 from QSSLoader import QSSLoader
 from qt_material import apply_stylesheet
 from PoseDetect import Detector
+import torch
 
 
 class MyApp:
@@ -27,7 +27,8 @@ class MyApp:
     def open(self):
         self.is_run = True
         # self.cap = cv2.VideoCapture("rtsp://admin:nutshell123456@192.168.20.198/h264/chn1/sub/av_stream")
-        self.cap = cv2.VideoCapture("rtsp://192.168.20.11:58554/live/car2")
+        self.cap = cv2.VideoCapture("rtsp://192.168.3.10:5540/ch0")
+        # self.cap = cv2.VideoCapture("rtsp://192.168.20.11:58554/live/car2")
         # print(self.cap.isOpened())
         return self.cap.isOpened()
 
@@ -69,6 +70,7 @@ class MyWidget(QWidget):
         self.video_view = QGraphicsView()
         self.video_view.setScene(self.scene)
         self.setWindowTitle("视频测试")
+        self.detector.init()
         # self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout = QGridLayout()
         self.timer.timeout.connect(self.time_out)
@@ -101,6 +103,7 @@ class MyWidget(QWidget):
         while self.app.is_run:
             if self.app.cap.isOpened():
                 success, self.frame = self.app.cap.read()
+                success, self.frame = self.app.cap.read()
                 ftime = time.perf_counter() - t
                 print(f'per frame time:{ftime:.4f}s')
                 t = time.perf_counter()
@@ -112,14 +115,14 @@ class MyWidget(QWidget):
                 # equ2 = cv2.merge((bH, gH, rH))
                 # result2 = np.hstack((frame, equ2))
 
-                model = self.detector.do_model(self.frame)
+                result = self.detector.do_model(self.frame)
                 if not success:
                     self.label.setText(f"restart:{self.app.count}")
                     self.app.restart()
                     self.label.setText(f"start ok!")
                     return
-                model.render()
-                frame2 = cv2.cvtColor(model.ims[0], cv2.COLOR_BGR2RGB) #
+                result.render()
+                frame2 = cv2.cvtColor(result.ims[0], cv2.COLOR_BGR2RGB)
                 q_img = QImage(frame2.data, frame2.shape[1], frame2.shape[0], frame2.shape[1] * 3, QImage.Format_RGB888)
                 # self.rhist = cv2.calcHist([frame], [2], None, [256], [0, 256])
                 # if self.is_resize:
@@ -191,9 +194,8 @@ class MyWidget(QWidget):
 
 
 if __name__ == '__main__':
-    appctxt = ApplicationContext()       # 1. Instantiate ApplicationContext
-    os.environ.putenv("YOLOV5_CONFIG_DIR", "./")
-    print(os.getenv("YOLOV5_CONFIG_DIR"))
+    appctxt = QApplication(sys.argv)       # 1. Instantiate ApplicationContext
+
     current_directory = os.path.dirname(os.path.abspath(__file__))
     print(current_directory)
     print(cv2.cuda.getCudaEnabledDeviceCount())
@@ -202,7 +204,7 @@ if __name__ == '__main__':
 
     list_themes()
     # setup stylesheet
-    apply_stylesheet(appctxt.app, theme='default_dark.xml')
+    apply_stylesheet(appctxt, theme='default_dark.xml')
     # style_file = 'E:/Python/PycharmProjects/pyqt5/src/main/python/Behave-dark.qss'
     # style_sheet = QSSLoader.read_qss_file(style_file)
     window = MyWidget()
@@ -210,6 +212,6 @@ if __name__ == '__main__':
     #  window.setStyleSheet(style_sheet)
     window.resize(600, 400)
     window.show()
-    exit_code = appctxt.app.exec_()      # 2. Invoke appctxt.app.exec_()
+    exit_code = appctxt.exec_()      # 2. Invoke appctxt.app.exec_()
     window.close_app()
     sys.exit(exit_code)

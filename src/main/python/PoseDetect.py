@@ -1,5 +1,6 @@
 import cv2
 import yolov5
+import torch
 
 import numpy as np
 haar_front_face_xml = 'data/haarcascade_frontalface_default.xml'
@@ -9,6 +10,9 @@ haar_eye_xml = 'data/haarcascade_eye.xml'
 class Detector(object):
     face_cascade = cv2.CascadeClassifier(haar_front_face_xml)
     eye_cascade = cv2.CascadeClassifier(haar_eye_xml)
+
+    def __init__(self):
+        self.model = None
 
     def detect(self,frame):
         gray_img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -26,9 +30,11 @@ class Detector(object):
             for (ex, ey, ew, eh) in eyes:
                 cv2.rectangle(frame, (ex + x, ey + y), (x + ex + ew, y + ey + eh), (0, 255, 0), 2)
 
-    def __init__(self):
+    def init(self):
         self.model = yolov5.load('yolov5s.pt')
-
+        # self.model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
+        # device = torch.device("cuda:0")
+        # self.model.to(device)
     def do_model(self, frame):
         results = self.model(frame)
         return results

@@ -6,3 +6,4 @@
 **/__pycache__
 yolov5s.pt
 **/yolov5s.pt
+/output
