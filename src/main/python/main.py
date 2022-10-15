@@ -14,6 +14,10 @@ from QSSLoader import QSSLoader
 from qt_material import apply_stylesheet
 from PoseDetect import Detector
 import torch
+import configparser
+
+config = configparser.ConfigParser()
+config.read("./config.ini")
 
 
 class MyApp:
@@ -27,7 +31,8 @@ class MyApp:
     def open(self):
         self.is_run = True
         # self.cap = cv2.VideoCapture("rtsp://admin:nutshell123456@192.168.20.198/h264/chn1/sub/av_stream")
-        self.cap = cv2.VideoCapture("rtsp://192.168.3.10:5540/ch0")
+        video_url = config.get("default", "videoUrl")
+        self.cap = cv2.VideoCapture(video_url)
         # self.cap = cv2.VideoCapture("rtsp://192.168.20.11:58554/live/car2")
         # print(self.cap.isOpened())
         return self.cap.isOpened()
@@ -41,6 +46,7 @@ class MyApp:
         self.close()
         time.sleep(2)
         self.open()
+
 
 class MyWidget(QWidget):
     app = MyApp()
@@ -81,20 +87,24 @@ class MyWidget(QWidget):
         self.start.clicked.connect(self.start_click)
         self.btn_full.clicked.connect(self.btnfull_click)
         self.btn_exit.clicked.connect(self.btnexit_click)
-        layout.addWidget(self.video_view, 0, 0, 1, 2)
+        layout.addWidget(self.video_view, 0, 0, 3, 3)
         self.chart_view = MyChartView()
         self.chart_view.init()
         self.chart_view_green = MyChartView()
         self.chart_view_green.init()
         self.chart_view_blue = MyChartView()
         self.chart_view_blue.init()
-        layout.addWidget(self.chart_view.graphicsView, 0, 2, 1, 2)
-        layout.addWidget(self.chart_view_green.graphicsView, 1, 0, 1, 2)
-        layout.addWidget(self.chart_view_blue.graphicsView, 1, 2, 1, 2)
-        layout.addWidget(self.start, 2, 0)
-        layout.addWidget(self.btn_full, 2, 1)
-        layout.addWidget(self.btn_exit, 2, 2)
-        layout.addWidget(self.label, 2, 3)
+        layout.addWidget(self.chart_view.graphicsView, 0, 3, 1, 1)
+        layout.addWidget(self.chart_view_green.graphicsView, 1, 3, 1, 1)
+        layout.addWidget(self.chart_view_blue.graphicsView, 2, 3, 1, 1)
+        layout.addWidget(self.start, 3, 0)
+        layout.addWidget(self.btn_full, 3, 1)
+        layout.addWidget(self.btn_exit, 3, 2)
+        layout.addWidget(self.label, 3, 3)
+        layout.setColumnStretch(0, 1)
+        layout.setColumnStretch(1, 1)
+        layout.setColumnStretch(2, 1)
+        layout.setColumnStretch(3, 1)
         self.setLayout(layout)
         # self.chart_view.add_data()
 
@@ -115,11 +125,14 @@ class MyWidget(QWidget):
                 # equ2 = cv2.merge((bH, gH, rH))
                 # result2 = np.hstack((frame, equ2))
 
-                result = self.detector.do_model(self.frame)
                 if not success:
                     self.label.setText(f"restart:{self.app.count}")
                     self.app.restart()
                     self.label.setText(f"start ok!")
+                    return
+                ok, result = self.detector.do_model(self.frame)
+                if not ok:
+                    time.sleep(1)
                     return
                 result.render()
                 frame2 = cv2.cvtColor(result.ims[0], cv2.COLOR_BGR2RGB)
