@@ -1,18 +1,24 @@
 import time
-
-from fbs_runtime.application_context.PyQt5 import ApplicationContext
-from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QPushButton, QSizePolicy, QGraphicsView,\
+from PyQt5.QtWidgets import QApplication
+# from fbs_runtime.application_context.PyQt5 import ApplicationContext
+from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QPushButton, QSizePolicy, QGraphicsView, \
     QGraphicsScene, QGraphicsPixmapItem
 from PyQt5.QtCore import Qt, QTimer, QFile
 from PyQt5.QtGui import QImage, QPixmap
-
+from PyQt5.QtCore import QUrl
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineScript
 import cv2
 import numpy as np
 import threading
 import sys
 from MyChartView import MyChartView
+from MyWebView import MyWebView
 from QSSLoader import QSSLoader
 from qt_material import apply_stylesheet
+
+import configparser
+config = configparser.ConfigParser() # 类实例化
+
 class MyApp:
     cap = None
     count = 0
@@ -23,7 +29,10 @@ class MyApp:
 
     def open(self):
         self.is_run = True
-        self.cap = cv2.VideoCapture("rtsp://admin:nutshell123456@192.168.20.198/h264/chn1/sub/av_stream")
+        # rtsp://admin:nutshell123456@192.168.20.198/h264/chn1/sub/av_stream
+        # rtsp://192.168.20.11:58554/live/car2
+        videoUrl = config.get("default","videoUrl")
+        self.cap = cv2.VideoCapture(videoUrl)
         # print(self.cap.isOpened())
         return self.cap.isOpened()
 
@@ -37,6 +46,7 @@ class MyApp:
         time.sleep(2)
         self.open()
 
+
 class MyWidget(QWidget):
     app = MyApp()
     timer = QTimer()
@@ -44,6 +54,7 @@ class MyWidget(QWidget):
 
     def __init__(self):
         super(MyWidget, self).__init__(None)  # 设置为顶级窗口，无边框
+        self.webview = None
         self.ready = False
         self.chart_view_blue = None
         self.chart_view_green = None
@@ -68,26 +79,40 @@ class MyWidget(QWidget):
         layout = QGridLayout()
         self.timer.timeout.connect(self.time_out)
         # timer.start(20)
+        self.webview = MyWebView()
+        # file:///E:/Python/PycharmProjects/pyqt5/index.html
+        # self.webview.settings.setUserStyleSheetUrl(QUrl("./scrollbarstyle.css"));
+        url = config.get('default', 'url')
+        self.webview.load(QUrl(url))
         self.start = QPushButton("Start")
         self.btn_full = QPushButton("全屏")
         self.btn_exit = QPushButton("退出全屏")
         self.start.clicked.connect(self.start_click)
         self.btn_full.clicked.connect(self.btnfull_click)
         self.btn_exit.clicked.connect(self.btnexit_click)
-        layout.addWidget(self.video_view, 0, 0, 1, 2)
+        layout.addWidget(self.video_view, 0, 0, 2, 3)
+        layout.addWidget(self.webview, 2, 0, 1, 3)
         self.chart_view = MyChartView()
         self.chart_view.init()
         self.chart_view_green = MyChartView()
         self.chart_view_green.init()
         self.chart_view_blue = MyChartView()
         self.chart_view_blue.init()
-        layout.addWidget(self.chart_view.graphicsView, 0, 2, 1, 2)
-        layout.addWidget(self.chart_view_green.graphicsView, 1, 0, 1, 2)
-        layout.addWidget(self.chart_view_blue.graphicsView, 1, 2, 1, 2)
-        layout.addWidget(self.start, 2, 0)
-        layout.addWidget(self.btn_full, 2, 1)
-        layout.addWidget(self.btn_exit, 2, 2)
-        layout.addWidget(self.label, 2, 3)
+        layout.addWidget(self.chart_view.graphicsView, 0, 3, 1, 1)
+        layout.addWidget(self.chart_view_green.graphicsView, 1, 3, 1, 1)
+        layout.addWidget(self.chart_view_blue.graphicsView, 2, 3, 1, 1)
+        layout.addWidget(self.start, 3, 0)
+        layout.addWidget(self.btn_full, 3, 1)
+        layout.addWidget(self.btn_exit, 3, 2)
+        layout.addWidget(self.label, 3, 3)
+        layout.setRowStretch(0, 1)
+        layout.setRowStretch(1, 1)
+        layout.setRowStretch(2, 1)
+        layout.setRowStretch(3, 1)
+        layout.setColumnStretch(0, 1)
+        layout.setColumnStretch(1, 1)
+        layout.setColumnStretch(2, 1)
+        layout.setColumnStretch(3, 1)
         self.setLayout(layout)
         # self.chart_view.add_data()
 
@@ -121,7 +146,7 @@ class MyWidget(QWidget):
                 #     self.pix = QPixmap(q_img).scaled(400, 400)
                 #
                 # else:
-                self.pix = QPixmap(q_img).scaled(self.video_view.width()-2, self.video_view.height()-2)
+                self.pix = QPixmap(q_img).scaled(self.video_view.width() - 2, self.video_view.height() - 2)
                 # 获取当前view的Rect
                 view_rect = self.video_view.contentsRect()
                 # 计算scene的Rect，因为我将图片图元居中显示，所以我将偏移计算在左右、上下居中位置
@@ -183,14 +208,14 @@ class MyWidget(QWidget):
 
 
 if __name__ == '__main__':
-    appctxt = ApplicationContext()       # 1. Instantiate ApplicationContext
-
+    appctxt = QApplication(sys.argv)  # 1. Instantiate ApplicationContext
+    config.read("./config.ini")
     # create the application and the main window
     from qt_material import list_themes
 
     list_themes()
     # setup stylesheet
-    apply_stylesheet(appctxt.app, theme='default_dark.xml')
+    apply_stylesheet(appctxt, theme='default_dark.xml')
     # style_file = 'E:/Python/PycharmProjects/pyqt5/src/main/python/Behave-dark.qss'
     # style_sheet = QSSLoader.read_qss_file(style_file)
     window = MyWidget()
@@ -198,6 +223,6 @@ if __name__ == '__main__':
     #  window.setStyleSheet(style_sheet)
     window.resize(600, 400)
     window.show()
-    exit_code = appctxt.app.exec_()      # 2. Invoke appctxt.app.exec_()
+    exit_code = appctxt.exec_()  # 2. Invoke appctxt.app.exec_()
     window.close_app()
     sys.exit(exit_code)

@@ -165,3 +165,22 @@ apply_stylesheet(app, theme='dark_teal.xml')
 window.show()
 app.exec_()
 ```
+
+## 4.3 QtCharts：给QChartView换肤，换背景色添加背景图片
+
+https://blog.csdn.net/amxld/article/details/112712428
+
+```python
+QChart *chart = new QChart();
+chart->setTheme(QChart::ChartThemeLight);
+# 这里chart是你自检的chart 进入枚举一共有多个，可以自己看下，那个更适合。
+```
+
+## 4.4 pyQt5 Qwebview网页调用python方
+https://www.cnblogs.com/6min/articles/10756318.html
+
+```python
+from PyQt5.QtCore import QUrl
+from PyQt5.QtWebEngineWidgets import QWebEngineView # 新版本在QWebEngine下
+```
+

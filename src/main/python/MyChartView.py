@@ -83,7 +83,8 @@ class MyChartView(object):
 
     def init(self):
         self.chart = QChart()
-        self.chart.setTitle('直方图')
+        self.chart.setTheme(QChart.ChartThemeDark)
+        self.chart.setTitle('视频实时分析')
         self.chart.legend().hide()
         self.series = QLineSeries(self.chart)
         # self.series.setName("压力")  # 设置曲线名称
