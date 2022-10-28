@@ -1,5 +1,7 @@
 import time
-from PyQt5.QtWidgets import QApplication
+
+from PyQt5.QtNetwork import QNetworkProxyFactory
+from PyQt5.QtWidgets import QApplication, QGraphicsDropShadowEffect
 # from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QPushButton, QSizePolicy, QGraphicsView, \
     QGraphicsScene, QGraphicsPixmapItem
@@ -33,6 +35,7 @@ class MyApp:
         # rtsp://192.168.20.11:58554/live/car2
         videoUrl = config.get("default","videoUrl")
         self.cap = cv2.VideoCapture(videoUrl)
+        self.cap.set(cv2.CAP_PROP_XI_TIMEOUT, 100)
         # print(self.cap.isOpened())
         return self.cap.isOpened()
 
@@ -70,6 +73,7 @@ class MyWidget(QWidget):
         self.frame = None
 
     def init(self):
+        QNetworkProxyFactory.setUseSystemConfiguration(False);
         self.label = QLabel("消息区")
         self.scene = QGraphicsScene()
         self.video_view = QGraphicsView()
@@ -83,6 +87,8 @@ class MyWidget(QWidget):
         # file:///E:/Python/PycharmProjects/pyqt5/index.html
         # self.webview.settings.setUserStyleSheetUrl(QUrl("./scrollbarstyle.css"));
         url = config.get('default', 'url')
+        self.webview.setGraphicsEffect(QGraphicsDropShadowEffect())
+        self.webview.graphicsEffect().setEnabled(False);
         self.webview.load(QUrl(url))
         self.start = QPushButton("Start")
         self.btn_full = QPushButton("全屏")
@@ -117,6 +123,7 @@ class MyWidget(QWidget):
         # self.chart_view.add_data()
 
     def run_thread(self):
+        print(self.app.open())
         t = time.perf_counter()
         while self.app.is_run:
             if self.app.cap.isOpened():
@@ -135,7 +142,7 @@ class MyWidget(QWidget):
                     self.label.setText(f"restart:{self.app.count}")
                     self.app.restart()
                     self.label.setText(f"start ok!")
-                    return
+                    continue
                 frame2 = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 q_img = QImage(frame2.data, frame2.shape[1], frame2.shape[0], frame2.shape[1] * 3, QImage.Format_RGB888)
                 # self.rhist = cv2.calcHist([frame], [2], None, [256], [0, 256])
@@ -158,6 +165,8 @@ class MyWidget(QWidget):
                 self.label.setText(f"time:{ftime:.4f}s")
             else:
                 self.label.setText(f"cap is error!{self.app.count}")
+                self.app.close()
+                print(self.app.open())
             time.sleep(0.01)
 
     def paintEvent(self, event):
@@ -175,7 +184,6 @@ class MyWidget(QWidget):
         return
 
     def start_click(self):
-        print(self.app.open())
         t1 = threading.Thread(target=self.run_thread)
         t1.start()
 
