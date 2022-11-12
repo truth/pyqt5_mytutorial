@@ -1,11 +1,12 @@
 import time
 
+from PyQt5 import QtGui
 from PyQt5.QtNetwork import QNetworkProxyFactory
 from PyQt5.QtWidgets import QApplication, QGraphicsDropShadowEffect
 # from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel, QPushButton, QSizePolicy, QGraphicsView, \
     QGraphicsScene, QGraphicsPixmapItem
-from PyQt5.QtCore import Qt, QTimer, QFile
+from PyQt5.QtCore import Qt, QTimer, QFile, QSize
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineScript
@@ -67,6 +68,7 @@ class MyWidget(QWidget):
         self.btn_full = None
         self.start = None
         self.label = None
+        self.lblLogo = None
         self.pix = None
         self.video_view = None
         self.scene = None
@@ -75,6 +77,12 @@ class MyWidget(QWidget):
     def init(self):
         QNetworkProxyFactory.setUseSystemConfiguration(False);
         self.label = QLabel("消息区")
+        self.lblLogo = QLabel()
+        image = QImage("./logo2.png")
+        self.lblLogo.setAlignment(Qt.AlignCenter)
+        if not image.isNull():
+            self.lblLogo.setPixmap(QPixmap.fromImage(image))
+
         self.scene = QGraphicsScene()
         self.video_view = QGraphicsView()
         self.video_view.setScene(self.scene)
@@ -88,7 +96,7 @@ class MyWidget(QWidget):
         # self.webview.settings.setUserStyleSheetUrl(QUrl("./scrollbarstyle.css"));
         url = config.get('default', 'url')
         self.webview.setGraphicsEffect(QGraphicsDropShadowEffect())
-        self.webview.graphicsEffect().setEnabled(False);
+        self.webview.graphicsEffect().setEnabled(False)
         self.webview.load(QUrl(url))
         self.start = QPushButton("Start")
         self.btn_full = QPushButton("全屏")
@@ -96,25 +104,29 @@ class MyWidget(QWidget):
         self.start.clicked.connect(self.start_click)
         self.btn_full.clicked.connect(self.btnfull_click)
         self.btn_exit.clicked.connect(self.btnexit_click)
-        layout.addWidget(self.video_view, 0, 0, 2, 3)
-        layout.addWidget(self.webview, 2, 0, 1, 3)
+        layout.addWidget(self.video_view, 0, 0, 3, 3)
+        layout.addWidget(self.webview, 3, 0, 1, 3)
         self.chart_view = MyChartView()
         self.chart_view.init()
         self.chart_view_green = MyChartView()
         self.chart_view_green.init()
         self.chart_view_blue = MyChartView()
         self.chart_view_blue.init()
-        layout.addWidget(self.chart_view.graphicsView, 0, 3, 1, 1)
-        layout.addWidget(self.chart_view_green.graphicsView, 1, 3, 1, 1)
-        layout.addWidget(self.chart_view_blue.graphicsView, 2, 3, 1, 1)
-        layout.addWidget(self.start, 3, 0)
-        layout.addWidget(self.btn_full, 3, 1)
-        layout.addWidget(self.btn_exit, 3, 2)
-        layout.addWidget(self.label, 3, 3)
-        layout.setRowStretch(0, 1)
+
+        layout.addWidget(self.lblLogo, 0, 3, 1, 1)
+        layout.addWidget(self.chart_view.graphicsView, 1, 3, 1, 1)
+        layout.addWidget(self.chart_view_green.graphicsView, 2, 3, 1, 1)
+        layout.addWidget(self.chart_view_blue.graphicsView, 3, 3, 1, 1)
+        # bottom
+        layout.addWidget(self.start, 4, 0)
+        layout.addWidget(self.btn_full, 4, 1)
+        layout.addWidget(self.btn_exit, 4, 2)
+        layout.addWidget(self.label, 4, 3)
+        layout.setRowStretch(0, 0.3)
         layout.setRowStretch(1, 1)
         layout.setRowStretch(2, 1)
         layout.setRowStretch(3, 1)
+        layout.setRowStretch(4, 1)
         layout.setColumnStretch(0, 1)
         layout.setColumnStretch(1, 1)
         layout.setColumnStretch(2, 1)
@@ -168,6 +180,13 @@ class MyWidget(QWidget):
                 self.app.close()
                 print(self.app.open())
             time.sleep(0.01)
+
+    def showEvent(self, event: QtGui.QShowEvent):
+        self.setAttribute(Qt.WA_Mapped)
+        old_size = self.size()
+        new_size = old_size + QSize(10, 10)
+        self.resize(new_size)
+        self.resize(old_size)
 
     def paintEvent(self, event):
         if not self.ready:
